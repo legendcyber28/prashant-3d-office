@@ -82,6 +82,19 @@
 button.iconbtn,#cardclose{min-width:44px;min-height:44px}.touritem{min-height:44px}#card{max-height:85vh;overflow:auto}@media(max-width:360px){#brand .name{font-size:12px}#brand .logo{display:none}#brand .sub{font-size:10px}#topbtns{gap:4px}}
 
 .widebtn{background:var(--panel);color:var(--ink);border:1px solid var(--hair);border-radius:10px;padding:8px 11px;min-height:44px;cursor:pointer;font-weight:700}#guide{position:fixed;z-index:19;bottom:105px;left:18px;width:min(390px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--hair);border-radius:18px;padding:20px;box-shadow:var(--shadow);max-height:55vh;overflow:auto}#guide.hide{display:none}#guide small{color:var(--accent-2);font-size:10px;letter-spacing:.12em}#guide h2{font-size:21px;margin:10px 0}#guide p{font-size:13px;line-height:1.6;color:var(--ink-2);margin-bottom:12px}#guide-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}#guide-actions button,#replayvoice{border:1px solid var(--hair);background:var(--panel-2);color:var(--ink);border-radius:9px;padding:10px 12px;min-height:44px;font-size:12px;cursor:pointer}#guide-actions button:first-child{background:var(--accent);color:#10151b;font-weight:700}#guide footer{font-size:10px;color:var(--ink-2);line-height:1.5;margin-top:12px}#closeguide{position:absolute;right:10px;top:10px;background:none;border:0;color:var(--ink);width:44px;height:44px;font-size:22px}#walkpad{position:fixed;bottom:18px;left:18px;display:flex;gap:6px;z-index:11}#walkpad button{width:44px;height:44px;border-radius:10px;background:var(--panel);border:1px solid var(--hair);color:var(--ink);font-size:22px;touch-action:none;cursor:pointer}#hint{display:none}#tour{left:auto;right:18px;transform:none}#brand .sub{max-width:150px}button:focus-visible{outline:3px solid var(--accent-2);outline-offset:2px}@media(max-width:600px){#brand{top:12px}#brand .logo{display:none}#brand .name{font-size:12px}#brand .sub{font-size:10px}#topbtns{top:66px;left:12px;right:auto;gap:6px}#topbtns .iconbtn{width:44px}#guide{bottom:128px;padding:16px;max-height:44vh}#walkpad{left:12px;bottom:70px}#tour{bottom:14px;right:12px}#guide h2{font-size:18px}}
+
+  /* AI greeting overlay */
+  #greet{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(8,10,14,.55);backdrop-filter:blur(3px)}
+  #greet.show{display:flex}
+  #greetcard{width:min(480px,94vw);background:var(--panel);border:1px solid var(--hair);border-radius:22px;padding:16px 16px 14px;box-shadow:var(--shadow);animation:up .3s ease}
+  #greetcard video{width:100%;border-radius:14px;display:block;background:#0d2b28}
+  #greetcard h2{font-size:17px;margin:12px 2px 3px;letter-spacing:-.01em}
+  #greetcard p{font-size:12px;color:var(--ink-2);margin:0 2px 12px}
+  #greetcard .row{display:flex;gap:8px}
+  #greetcard button{flex:1;min-height:44px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--hair);background:var(--panel-2);color:var(--ink)}
+  #greetcard button.primary{background:var(--accent);color:#10151b;border-color:transparent}
+  #greetclose{position:absolute;top:10px;right:10px;width:36px;height:36px;min-height:36px;flex:none!important;border-radius:10px;font-size:15px}
+  #greetcard{position:relative}
 </style>
 </head>
 <body>
@@ -112,6 +125,19 @@ button.iconbtn,#cardclose{min-width:44px;min-height:44px}.touritem{min-height:44
 
 <section id="guide" class="hide" aria-live="polite"><button id="closeguide" aria-label="Close guide">×</button><small>GUIDED OFFICE VISIT</small><h2 id="guide-title"></h2><p id="speech-caption"></p><button id="replayvoice">Replay voice</button><div id="guide-actions"></div><footer>Tara, guard and employees are fictional portfolio characters.</footer></section><div id="walkpad" aria-label="Walk controls"><button data-key="ArrowLeft" aria-label="Walk left">←</button><button data-key="ArrowUp" aria-label="Walk forward">↑</button><button data-key="ArrowDown" aria-label="Walk back">↓</button><button data-key="ArrowRight" aria-label="Walk right">→</button></div><div id="loader"><div class="ring"></div><p>Building the office…</p></div>
 <div id="simple"></div>
+<div id="greet" role="dialog" aria-label="Video greeting from Prashant">
+  <div id="greetcard">
+    <button id="greetclose" aria-label="Close greeting">✕</button>
+    <video id="greetvid" src="prashant-greeting.mp4" playsinline muted loop preload="auto"></video>
+    <h2>Hello! I'm Prashant</h2>
+    <p>A quick AI 3D greeting - turn sound on for the full welcome, then come in.</p>
+    <div class="row">
+      <button id="greetsound">Play with sound</button>
+      <button id="greetenter" class="primary">Enter the office</button>
+    </div>
+  </div>
+</div>
+
 
 <script src="1-three.min.js"></script>
 <script>/* Prashant's Office - isometric 3D walk-through portfolio.
@@ -615,6 +641,36 @@ button.iconbtn,#cardclose{min-width:44px;min-height:44px}.touritem{min-height:44
     document.getElementById('loader').classList.add('fadeout');
     guideScreen('gate');
   }, 350);
+})();
+</script>
+
+<script>
+/* AI greeting overlay: plays the Flow-generated 3D greeting clip on arrival. */
+(function () {
+  var overlay = document.getElementById('greet');
+  var vid = document.getElementById('greetvid');
+  if (!overlay || !vid) return;
+  function show() {
+    overlay.classList.add('show');
+    vid.muted = true;
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+  function hide() {
+    overlay.classList.remove('show');
+    vid.pause();
+  }
+  document.getElementById('greetclose').addEventListener('click', hide);
+  document.getElementById('greetenter').addEventListener('click', hide);
+  document.getElementById('greetsound').addEventListener('click', function () {
+    vid.muted = false;
+    vid.currentTime = 0;
+    var p = vid.play();
+    if (p && p.catch) p.catch(function () {});
+  });
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) hide(); });
+  if (document.readyState === 'complete') setTimeout(show, 900);
+  else window.addEventListener('load', function () { setTimeout(show, 900); });
 })();
 </script>
 </body></html>
